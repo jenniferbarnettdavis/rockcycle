@@ -1,6 +1,6 @@
 {
-  "name": "Rock Cycle Explorer",
-  "description": "An interactive choice board for 6th-grade students to learn about the rock cycle through diagrams, games, quizzes, and real-world examples.",
+  "name": "rockcycle.web.app",
+  "description": "An interactive choice board for students to explore the rock cycle - featuring diagrams, games, and knowledge checks.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

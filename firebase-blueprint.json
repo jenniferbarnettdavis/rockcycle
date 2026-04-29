@@ -1,0 +1,36 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Public profile information for students.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string", "description": "Student's teacher-assigned or chosen name." },
+        "lastSeen": { "type": "string", "format": "date-time", "description": "Last time the student accessed the explorer." }
+      },
+      "required": ["displayName", "lastSeen"]
+    },
+    "Completion": {
+      "title": "Review Completion",
+      "description": "Records of students completing the rock cycle review sequence.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the student." },
+        "displayName": { "type": "string", "description": "Name at time of completion." },
+        "completedAt": { "type": "string", "format": "date-time", "description": "Server timestamp of completion." },
+        "score": { "type": "number", "description": "Number of correct answers." }
+      },
+      "required": ["userId", "displayName", "completedAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Stores user profile data."
+    },
+    "completions/{completionId}": {
+      "schema": "Completion",
+      "description": "Stores review completion records."
+    }
+  }
+}

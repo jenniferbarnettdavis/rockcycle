@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, Info, Sun, Flame, CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
 import { ViewType } from '../types';
 import { ROCK_STATE_IMAGES } from '../data/rockData';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
+import { db } from '../lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useFirebase, handleFirestoreError, OperationType } from './FirebaseProvider';
 
 interface DiagramViewProps {
   setView: (view: ViewType) => void;
@@ -62,10 +65,30 @@ export default function DiagramView({ setView }: DiagramViewProps) {
   const [mode, setMode] = useState<'explore' | 'review'>('explore');
   const [reviewIndex, setReviewIndex] = useState(0);
   const [feedback, setFeedback] = useState<'idle' | 'correct' | 'wrong'>('idle');
+  const { user } = useFirebase();
 
   const reviewSequence: DiagramNode[] = [
     'Magma', 'Igneous Rock', 'Sediment', 'Sedimentary Rock', 'Metamorphic Rock'
   ];
+
+  useEffect(() => {
+    if (reviewIndex === reviewSequence.length && user) {
+      const saveCompletion = async () => {
+        try {
+          await addDoc(collection(db, 'completions'), {
+            userId: user.uid,
+            displayName: user.displayName || 'Anonymous Explorer',
+            completedAt: serverTimestamp(),
+            score: reviewSequence.length // simplified for this demo
+          });
+          console.log("Completion recorded!");
+        } catch (error) {
+          handleFirestoreError(error, OperationType.CREATE, 'completions');
+        }
+      };
+      saveCompletion();
+    }
+  }, [reviewIndex, user, reviewSequence.length]);
 
   const handleNodeClick = (node: DiagramNode) => {
     if (mode === 'explore') {

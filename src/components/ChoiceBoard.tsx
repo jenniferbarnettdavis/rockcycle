@@ -1,7 +1,10 @@
+import { useEffect, useState } from 'react';
 import { ViewType } from '../types';
-import { Network, Image as ImageIcon, CheckSquare, Gamepad2, Play } from 'lucide-react';
+import { Network, Image as ImageIcon, CheckSquare, Gamepad2, Play, Users } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
+import { db } from '../lib/firebase';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 
 interface ChoiceBoardProps {
   setView: (view: ViewType) => void;
@@ -38,7 +41,28 @@ const choices = [
   }
 ];
 
+interface CompletionRecord {
+  id: string;
+  displayName: string;
+  completedAt: any;
+  score: number;
+}
+
 export default function ChoiceBoard({ setView }: ChoiceBoardProps) {
+  const [recentCompletions, setRecentCompletions] = useState<CompletionRecord[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'completions'), orderBy('completedAt', 'desc'), limit(5));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const records = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as CompletionRecord[];
+      setRecentCompletions(records);
+    });
+
+    return () => unsubscribe();
+  }, []);
   return (
     <div className="flex flex-col h-full gap-8 max-w-4xl mx-auto py-8">
       <div className="text-center space-y-4 mb-4">
@@ -76,6 +100,35 @@ export default function ChoiceBoard({ setView }: ChoiceBoardProps) {
           );
         })}
       </div>
+
+      {recentCompletions.length > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-8 bg-black/30 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <Users className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-white/50">Classroom Activity Feed</h3>
+          </div>
+          <div className="space-y-4">
+            {recentCompletions.map((record) => (
+              <div key={record.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-emerald-500/20 rounded-full flex items-center justify-center border border-emerald-400/20 text-emerald-400">
+                    <CheckSquare className="w-4 h-4" />
+                  </div>
+                  <p className="text-sm font-bold text-slate-100">{record.displayName}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400/80">Completed Review</p>
+                  <p className="text-[8px] text-white/30 uppercase tracking-tighter">Just now</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

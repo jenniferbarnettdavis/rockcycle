@@ -8,8 +8,13 @@ import GameView from './components/GameView';
 import { Map } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+import { useFirebase } from './components/FirebaseProvider';
+import { LogIn, LogOut, User as UserIcon } from 'lucide-react';
+import { cn } from './lib/utils';
+
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('board');
+  const { user, signIn, logout } = useFirebase();
   
   const BackgroundElements = () => (
     <>
@@ -30,15 +35,38 @@ export default function App() {
               className="flex flex-col cursor-pointer hover:opacity-90 transition-opacity"
               onClick={() => setCurrentView('board')}
             >
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-none uppercase text-left">
-                Rock Cycle <span className="text-orange-400">Explorer</span>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-none uppercase text-left group">
+                Rock Cycle <span className="text-orange-400 group-hover:text-orange-300 transition-colors">Explorer</span>
               </h1>
               <p className="text-slate-400 font-medium mt-1 text-[10px] sm:text-xs tracking-widest uppercase truncate max-w-[200px] sm:max-w-none">
                 Energy Flow & Materials • SC.7.13.5.a
               </p>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
+              {user ? (
+                <div className="hidden sm:flex items-center gap-3 bg-black/30 px-4 py-2 rounded-2xl border border-white/10">
+                  <div className="text-right">
+                    <p className="text-xs font-bold text-white leading-tight">{user.displayName}</p>
+                    <button onClick={logout} className="text-[9px] font-black uppercase tracking-widest text-rose-400 hover:text-rose-300">Logout</button>
+                  </div>
+                  {user.photoURL ? (
+                    <img src={user.photoURL} className="w-8 h-8 rounded-full border border-white/20" alt="" />
+                  ) : (
+                    <div className="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center border border-white/10">
+                      <UserIcon className="w-4 h-4" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button 
+                  onClick={signIn}
+                  className="hidden sm:flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-2xl border border-white/10 transition-all font-bold text-xs uppercase tracking-widest"
+                >
+                  <LogIn className="w-4 h-4" /> Sign In
+                </button>
+              )}
+              
               <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-rose-500 shadow-lg shadow-orange-500/20">
                 <Map className="w-6 h-6 text-white" />
               </div>
