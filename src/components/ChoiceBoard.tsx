@@ -5,6 +5,7 @@ import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
 import { db } from '../lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { useFirebase, handleFirestoreError, OperationType } from './FirebaseProvider';
 
 interface ChoiceBoardProps {
   setView: (view: ViewType) => void;
@@ -50,8 +51,14 @@ interface CompletionRecord {
 
 export default function ChoiceBoard({ setView }: ChoiceBoardProps) {
   const [recentCompletions, setRecentCompletions] = useState<CompletionRecord[]>([]);
+  const { user, loading } = useFirebase();
 
   useEffect(() => {
+    if (loading || !user) {
+      setRecentCompletions([]);
+      return;
+    }
+
     const q = query(collection(db, 'completions'), orderBy('completedAt', 'desc'), limit(5));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const records = snapshot.docs.map(doc => ({
@@ -59,10 +66,13 @@ export default function ChoiceBoard({ setView }: ChoiceBoardProps) {
         ...doc.data()
       })) as CompletionRecord[];
       setRecentCompletions(records);
+    }, (error) => {
+      // Don't throw here to avoid crashing the UI, but log it properly
+      handleFirestoreError(error, OperationType.LIST, 'completions');
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [user, loading]);
   return (
     <div className="flex flex-col h-full gap-8 max-w-4xl mx-auto py-8">
       <div className="text-center space-y-4 mb-4">
